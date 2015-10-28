@@ -12,6 +12,7 @@ package info.ata4.unity.rtti;
 import info.ata4.unity.asset.Type;
 import info.ata4.util.collection.Node;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 /**
@@ -74,6 +75,10 @@ public class FieldNode extends Node<FieldNode> {
     public <T> T getArrayData(Class<T> type) {
         FieldNode arrayField = getChild("Array");
         if (arrayField == null) {
+            T data = getChildValue("data", type);
+            if (data != null) {
+                return data;
+            }
             throw new RuntimeTypeException("Field is not an array");
         }
         
@@ -83,10 +88,16 @@ public class FieldNode extends Node<FieldNode> {
     public void setArrayData(Object value) {
         FieldNode arrayField = getChild("Array");
         if (arrayField == null) {
-            throw new RuntimeTypeException("Field is not an array");
+        	arrayField = this;
+        }
+        FieldNode dataField = arrayField.getChild("data");
+        if (dataField == null) {
+        	throw new RuntimeTypeException("Field is not an array");
         }
         
-        arrayField.setChildValue("data", value);
+        dataField.setValue(value);
+        ByteBuffer buffer = (ByteBuffer) value;
+        arrayField.setChildValue("size", buffer.limit());
     }
     
     public <T> T getChildArrayData(String name, Class<T> type) {
@@ -141,7 +152,7 @@ public class FieldNode extends Node<FieldNode> {
         return getChildValue(name, Number.class).longValue() & 0xffffffffL;
     }
     
-    public void getUInt32(String name, long v) {
+    public void setUInt32(String name, long v) {
         setChildValue(name, v & 0xffffffffL);
     }
 
